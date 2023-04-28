@@ -4,6 +4,7 @@
   "icon": "app.png",
   "version":"0.01",
   "description": "Bangle Firmware for the Spirit project",
+  "supports": ["BANGLEJS","BANGLEJS2"],
   "tags": "",
   "storage": [
     {"name":"spirit.app.js","url":"app.js"},
