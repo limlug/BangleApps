@@ -1,0 +1,12 @@
+{ "id": "spirit",
+  "name": "Spirit Bangle Firmware",
+  "shortName":"Spirit",
+  "icon": "app.png",
+  "version":"0.01",
+  "description": "Bangle Firmware for the Spirit project",
+  "tags": "",
+  "storage": [
+    {"name":"spirit.app.js","url":"app.js"},
+    {"name":"spirit.img","url":"app-icon.js","evaluate":true}
+  ]
+}
