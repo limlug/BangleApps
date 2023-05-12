@@ -3,6 +3,8 @@ var connected = false;
 var batteryInterval = false;
 var messages = 0;
 var ang = 0;
+var position = "RHR";
+var position_code = 0;
 
 var img = {
   width : 200, height : 200, bpp : 1,
@@ -18,7 +20,7 @@ var spinner = {
 function drawSpinner() {
   ang += 0.1;
   g.setBgColor(0, 0, 0);
-  g.clearRect(20, 180, 60, 240);
+  g.clearRect(20, 190, 60, 240);
   g.setBgColor(1, 1, 1);
   g.drawImage(spinner, 40, 215, {rotate: ang});
 }
@@ -31,19 +33,72 @@ function drawMessagesSent(){
   g.drawString("m/sec", 188, 180);
   messages = 0;
 }
+function drawPosition(){
+  g.setBgColor(0, 0, 0);
+  g.clearRect(40, 180, 60, 200);
+  g.setBgColor(1, 1, 1);
+  g.drawString(position, 40, 180);
+}
+
+setWatch(() => {
+    console.log(Bangle.isLCDOn());
+    if (Bangle.isLCDOn() === true){
+        Bangle.setLCDPower(0);
+    }
+    else {
+        Bangle.setLCDPower(1);
+    }
+}, BTN1, {repeat:true});
+
+setWatch(() => {
+    Bangle.beep()
+    if (position === "RHR"){
+        position = "RHL";
+        position_code = 1;
+        drawPosition();
+        NRF.updateServices({
+          0xBCDE: {
+            0xD000: {
+              value: new Int32Array([position_code]).buffer,
+              notify: true
+            }
+          }
+        });
+    }
+    else {
+        position = "RHR";
+        drawPosition();
+        position_code = 0;
+        NRF.updateServices({
+          0xBCDE: {
+            0xD000: {
+              value: new Int32Array([position_code]).buffer,
+              notify: true
+            }
+          }
+        });
+
+    }
+}, BTN3, {repeat:true});
+
+function drawImages(){
+  g.clear()
+  Bangle.setLCDTimeout(0);
+  g.setBgColor(1, 1, 1);
+  g.setColor(1, 1, 1);
+  g.drawImage(img, 20, 5);
+  setInterval(drawSpinner, 50);
+  g.setFont("Vector", 20);
+  g.drawString("Spirit", 85, 210);
+  g.setFont("Vector", 10);
+  g.drawString("v0.1", 170, 218);
+  drawMessagesSent();
+  setInterval(drawMessagesSent, 1000);
+  drawPosition();
+
+}
 
 Bangle.setLCDPower(1);
-Bangle.setLCDTimeout(0);
-g.setBgColor(1, 1, 1);
-g.setColor(1, 1, 1);
-g.drawImage(img, 20, 5);
-setInterval(drawSpinner, 50);
-g.setFont("Vector", 20);
-g.drawString("Spirit", 85, 210);
-g.setFont("Vector", 10);
-g.drawString("v0.1", 170, 218);
-drawMessagesSent();
-setInterval(drawMessagesSent, 1000);
 
 
 Bangle.on('HRM-raw', function(hrm) {
@@ -85,9 +140,11 @@ Bangle.on('mag', function(xyz) {
       messages += 1;
   }
 });
-
+//Bangle.on('GPS', function(fix) {console.log(fix);});
 
 function onInit() {
+  drawImages();
+  //Bangle.setGPSPower(true, "spirit");
   NRF.on('connect', function () {
       connected = true;
       //Bangle.ioWr(0x80,0);
@@ -123,6 +180,12 @@ function onInit() {
         notify: true,
         readable: true,
         value: new Int32Array([0, 0, 0]).buffer,
+    },
+    0xD000 : {
+        description: 'Bangle Position',
+        notify: true,
+        readable: true,
+        value: new Int32Array([position_code]).buffer,
     },
 
   }
